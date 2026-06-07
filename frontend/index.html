@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Library Dashboard</title>
+
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+  <aside class="sidebar">
+    <div class="logo-box">
+      <h2>Library DB</h2>
+      <p>Simple Analytical Dashboard</p>
+    </div>
+
+    <button class="nav-btn active-btn" onclick="showPage('dashboard', this)">Dashboard</button>
+    <button class="nav-btn" onclick="showPage('books', this)">Books</button>
+    <button class="nav-btn" onclick="showPage('issues', this)">Issue Records</button>
+    <button class="nav-btn" onclick="showPage('categories', this)">Categories</button>
+    <button class="nav-btn" onclick="showPage('reports', this)">Reports</button>
+  </aside>
+
+  <main class="main-content">
+
+    <!-- Dashboard Section -->
+    <section id="dashboard" class="page active">
+      <div class="page-header">
+        <h1>Library Analytical Dashboard</h1>
+        <p>Here we can view books, issue records, students, categories and useful reports.</p>
+      </div>
+
+      <div class="cards">
+        <div class="card"><h3>Total Books</h3><p id="totalBooks">0</p></div>
+        <div class="card"><h3>Total Issues</h3><p id="totalIssues">0</p></div>
+        <div class="card"><h3>Total Students</h3><p id="totalStudents">0</p></div>
+        <div class="card"><h3>Total Categories</h3><p id="totalCategories">0</p></div>
+        <div class="card"><h3>Issued Books</h3><p id="issuedBooks">0</p></div>
+        <div class="card"><h3>Returned Books</h3><p id="returnedBooks">0</p></div>
+        <div class="card"><h3>Late Books</h3><p id="lateBooks">0</p></div>
+        <div class="card"><h3>Top Student</h3><p id="topStudent">-</p></div>
+      </div>
+
+      <div class="charts">
+        <div class="chart-box">
+          <h2>Books by Category</h2>
+          <canvas id="categoryChart"></canvas>
+        </div>
+
+        <div class="chart-box">
+          <h2>Issue Status</h2>
+          <canvas id="statusChart"></canvas>
+        </div>
+
+        <div class="chart-box">
+          <h2>Top Students by Issued Books</h2>
+          <canvas id="topStudentsChart"></canvas>
+        </div>
+
+        <div class="chart-box">
+          <h2>Available vs Issued Copies</h2>
+          <canvas id="copiesChart"></canvas>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <h2>Complete Dashboard Log</h2>
+        <div class="table-wrapper">
+          <table>
+            <thead id="dashboardHead"></thead>
+            <tbody id="dashboardBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Books Section -->
+    <section id="books" class="page">
+      <div class="page-header">
+        <h1>Books Data</h1>
+        <p>All books with author, category, total copies and available copies.</p>
+      </div>
+
+      <div class="table-card">
+        <h2>Books Table</h2>
+        <div class="table-wrapper">
+          <table>
+            <thead id="booksHead"></thead>
+            <tbody id="booksBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Issue Records Section -->
+    <section id="issues" class="page">
+      <div class="page-header">
+        <h1>Issue Records</h1>
+        <p>All book issue records with student, book, date and status.</p>
+      </div>
+
+      <div class="table-card">
+        <h2>Issue Records Table</h2>
+        <div class="table-wrapper">
+          <table>
+            <thead id="issuesHead"></thead>
+            <tbody id="issuesBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Categories Section -->
+    <section id="categories" class="page">
+      <div class="page-header">
+        <h1>Categories</h1>
+        <p>This section shows how many books exist in each category.</p>
+      </div>
+
+      <div class="table-card">
+        <h2>Books by Category Table</h2>
+        <div class="table-wrapper">
+          <table>
+            <thead id="categoriesHead"></thead>
+            <tbody id="categoriesBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Reports Section -->
+    <section id="reports" class="page">
+      <div class="page-header">
+        <h1>Reports</h1>
+        <p>These tables are based on our SQL analytical reports.</p>
+      </div>
+
+      <div class="table-card">
+        <h2>Issue Status Count</h2>
+        <div class="table-wrapper">
+          <table>
+            <thead id="statusHead"></thead>
+            <tbody id="statusBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <h2>Top Students by Issued Books</h2>
+        <div class="table-wrapper">
+          <table>
+            <thead id="topStudentsHead"></thead>
+            <tbody id="topStudentsBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <h2>Available Copies Report</h2>
+        <div class="table-wrapper">
+          <table>
+            <thead id="copiesHead"></thead>
+            <tbody id="copiesBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
