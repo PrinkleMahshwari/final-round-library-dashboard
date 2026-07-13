@@ -22,15 +22,20 @@ app.add_middleware(
 # fetch conection string from .env
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-try:
-    # Pass the full URL directly to psycopg2
-    connection = psycopg2.connect(DATABASE_URL)
-except Exception as e:
-    print(f"Database Connection Error: {e}")
-    connection = None
-
 # resolve frontend dir relative to this file, since serverless cwd isn't guaranteed
 FRONTEND_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "frontend")
+
+
+def get_connection():
+    # open a fresh connection per request instead of reusing one global connection,
+    # since serverless functions can freeze/thaw and kill long-lived connections
+    if not DATABASE_URL:
+        raise HTTPException(status_code=500, detail="DATABASE_URL is not configured")
+    try:
+        return psycopg2.connect(DATABASE_URL)
+    except Exception as e:
+        print(f"Database Connection Error: {e}")
+        raise HTTPException(status_code=500, detail="Database connection is unavailable")
 
 
 @app.get("/api")
@@ -40,12 +45,9 @@ def api_home():
 
 @app.get("/api/books")
 def get_books():
-    if not connection:
-        raise HTTPException(status_code=500, detail="Database connection is unavailable")
-    
-    try:    
-        # Using 'with' statements automatically closes the cursor safely
-        with connection.cursor() as curs:
+    conn = get_connection()
+    try:
+        with conn.cursor() as curs:
             curs.execute("""
                 SELECT 
                     b.book_id,
@@ -62,23 +64,20 @@ def get_books():
             columns = [column[0] for column in curs.description]
             bookData = [dict(zip(columns, row)) for row in rows]
             return bookData
-            
+
     except Exception as e:
         print(f"Query Error: {e}")
-        # Always rollback the transaction if a query fails to prevent frozen connections
-        if connection:
-            connection.rollback()
+        conn.rollback()
         raise HTTPException(status_code=500, detail="Failed to fetch book data")
+    finally:
+        conn.close()
 
 
 @app.get("/api/issues")
 def get_issues():
-    if not connection:
-        raise HTTPException(status_code=500, detail="Database connection is unavailable")
-    
-    try:    
-        # Using 'with' statements automatically closes the cursor safely
-        with connection.cursor() as curs:
+    conn = get_connection()
+    try:
+        with conn.cursor() as curs:
             curs.execute("""
                 SELECT 
                     i.issue_id,
@@ -99,22 +98,20 @@ def get_issues():
             columns = [column[0] for column in curs.description]
             issueData = [dict(zip(columns, row)) for row in rows]
             return issueData
-            
+
     except Exception as e:
         print(f"Query Error: {e}")
-        # Always rollback the transaction if a query fails to prevent frozen connections
-        if connection:
-            connection.rollback()
+        conn.rollback()
         raise HTTPException(status_code=500, detail="Failed to fetch issue data")
+    finally:
+        conn.close()
 
 
 @app.get("/api/reports/books-by-category")
 def books_by_category():
-    if not connection:
-        raise HTTPException(status_code=500, detail="Database connection is unavailable")
-    
-    try:    
-        with connection.cursor() as curs:
+    conn = get_connection()
+    try:
+        with conn.cursor() as curs:
             curs.execute("""
                 SELECT 
                     c.category_name,
@@ -128,21 +125,20 @@ def books_by_category():
             columns = [column[0] for column in curs.description]
             categoryData = [dict(zip(columns, row)) for row in rows]
             return categoryData
-            
+
     except Exception as e:
         print(f"Query Error: {e}")
-        if connection:
-            connection.rollback()
+        conn.rollback()
         raise HTTPException(status_code=500, detail="Failed to fetch category data")
+    finally:
+        conn.close()
 
 
 @app.get("/api/reports/issue-status")
 def issue_status():
-    if not connection:
-        raise HTTPException(status_code=500, detail="Database connection is unavailable")
-    
-    try:    
-        with connection.cursor() as curs:
+    conn = get_connection()
+    try:
+        with conn.cursor() as curs:
             curs.execute("""
                 SELECT 
                     status,
@@ -155,21 +151,20 @@ def issue_status():
             columns = [column[0] for column in curs.description]
             statusData = [dict(zip(columns, row)) for row in rows]
             return statusData
-            
+
     except Exception as e:
         print(f"Query Error: {e}")
-        if connection:
-            connection.rollback()
+        conn.rollback()
         raise HTTPException(status_code=500, detail="Failed to fetch issue status data")
+    finally:
+        conn.close()
 
 
 @app.get("/api/reports/top-students")
 def top_students():
-    if not connection:
-        raise HTTPException(status_code=500, detail="Database connection is unavailable")
-    
-    try:    
-        with connection.cursor() as curs:
+    conn = get_connection()
+    try:
+        with conn.cursor() as curs:
             curs.execute("""
                 SELECT 
                     s.student_name,
@@ -184,21 +179,20 @@ def top_students():
             columns = [column[0] for column in curs.description]
             studentData = [dict(zip(columns, row)) for row in rows]
             return studentData
-            
+
     except Exception as e:
         print(f"Query Error: {e}")
-        if connection:
-            connection.rollback()
+        conn.rollback()
         raise HTTPException(status_code=500, detail="Failed to fetch top students data")
+    finally:
+        conn.close()
 
 
 @app.get("/api/reports/available-copies")
 def available_copies():
-    if not connection:
-        raise HTTPException(status_code=500, detail="Database connection is unavailable")
-    
-    try:    
-        with connection.cursor() as curs:
+    conn = get_connection()
+    try:
+        with conn.cursor() as curs:
             curs.execute("""
                 SELECT 
                     b.title,
@@ -214,21 +208,20 @@ def available_copies():
             columns = [column[0] for column in curs.description]
             copiesData = [dict(zip(columns, row)) for row in rows]
             return copiesData
-            
+
     except Exception as e:
         print(f"Query Error: {e}")
-        if connection:
-            connection.rollback()
+        conn.rollback()
         raise HTTPException(status_code=500, detail="Failed to fetch available copies data")
+    finally:
+        conn.close()
 
 
 @app.get("/api/dashboard/stats")
 def get_dashboard_stats():
-    if not connection:
-        raise HTTPException(status_code=500, detail="Database connection is unavailable")
-    
-    try:    
-        with connection.cursor() as curs:
+    conn = get_connection()
+    try:
+        with conn.cursor() as curs:
             curs.execute("""
                 SELECT 
                     (SELECT COUNT(*) FROM students) AS total_students,
@@ -242,21 +235,20 @@ def get_dashboard_stats():
             row = curs.fetchone()
             columns = [column[0] for column in curs.description]
             return dict(zip(columns, row))
-            
+
     except Exception as e:
         print(f"Query Error: {e}")
-        if connection:
-            connection.rollback()
+        conn.rollback()
         raise HTTPException(status_code=500, detail="Failed to fetch dashboard statistics")
+    finally:
+        conn.close()
 
 
 @app.get("/api/dashboard/details-table")
 def get_dashboard_details_table():
-    if not connection:
-        raise HTTPException(status_code=500, detail="Database connection is unavailable")
-    
-    try:    
-        with connection.cursor() as curs:
+    conn = get_connection()
+    try:
+        with conn.cursor() as curs:
             curs.execute("""
                 SELECT 
                     s.student_name,
@@ -276,12 +268,13 @@ def get_dashboard_details_table():
             rows = curs.fetchall()
             columns = [column[0] for column in curs.description]
             return [dict(zip(columns, row)) for row in rows]
-            
+
     except Exception as e:
         print(f"Query Error: {e}")
-        if connection:
-            connection.rollback()
+        conn.rollback()
         raise HTTPException(status_code=500, detail="Failed to fetch dashboard detailed table data")
+    finally:
+        conn.close()
 
 
 # serve frontend index for the root route
