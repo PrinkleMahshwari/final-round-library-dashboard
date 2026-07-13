@@ -3,7 +3,7 @@ import psycopg2
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 # load environment variable first
 load_dotenv()
@@ -28,6 +28,9 @@ try:
 except Exception as e:
     print(f"Database Connection Error: {e}")
     connection = None
+
+# resolve frontend dir relative to this file, since serverless cwd isn't guaranteed
+FRONTEND_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "frontend")
 
 
 @app.get("/api")
@@ -111,7 +114,6 @@ def books_by_category():
         raise HTTPException(status_code=500, detail="Database connection is unavailable")
     
     try:    
-        # Using 'with' statements automatically closes the cursor safely
         with connection.cursor() as curs:
             curs.execute("""
                 SELECT 
@@ -129,7 +131,6 @@ def books_by_category():
             
     except Exception as e:
         print(f"Query Error: {e}")
-        # Always rollback the transaction if a query fails to prevent frozen connections
         if connection:
             connection.rollback()
         raise HTTPException(status_code=500, detail="Failed to fetch category data")
@@ -141,7 +142,6 @@ def issue_status():
         raise HTTPException(status_code=500, detail="Database connection is unavailable")
     
     try:    
-        # Using 'with' statements automatically closes the cursor safely
         with connection.cursor() as curs:
             curs.execute("""
                 SELECT 
@@ -158,7 +158,6 @@ def issue_status():
             
     except Exception as e:
         print(f"Query Error: {e}")
-        # Always rollback the transaction if a query fails to prevent frozen connections
         if connection:
             connection.rollback()
         raise HTTPException(status_code=500, detail="Failed to fetch issue status data")
@@ -170,7 +169,6 @@ def top_students():
         raise HTTPException(status_code=500, detail="Database connection is unavailable")
     
     try:    
-        # Using 'with' statements automatically closes the cursor safely
         with connection.cursor() as curs:
             curs.execute("""
                 SELECT 
@@ -189,7 +187,6 @@ def top_students():
             
     except Exception as e:
         print(f"Query Error: {e}")
-        # Always rollback the transaction if a query fails to prevent frozen connections
         if connection:
             connection.rollback()
         raise HTTPException(status_code=500, detail="Failed to fetch top students data")
@@ -201,7 +198,6 @@ def available_copies():
         raise HTTPException(status_code=500, detail="Database connection is unavailable")
     
     try:    
-        # Using 'with' statements automatically closes the cursor safely
         with connection.cursor() as curs:
             curs.execute("""
                 SELECT 
@@ -221,10 +217,10 @@ def available_copies():
             
     except Exception as e:
         print(f"Query Error: {e}")
-        # Always rollback the transaction if a query fails to prevent frozen connections
         if connection:
             connection.rollback()
         raise HTTPException(status_code=500, detail="Failed to fetch available copies data")
+
 
 @app.get("/api/dashboard/stats")
 def get_dashboard_stats():
@@ -288,5 +284,16 @@ def get_dashboard_details_table():
         raise HTTPException(status_code=500, detail="Failed to fetch dashboard detailed table data")
 
 
-# mount the static frontend files
-app.mount("/", StaticFiles(directory="./frontend", html=True), name="frontend")
+# serve frontend index for the root route
+@app.get("/")
+def serve_index():
+    return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
+
+
+# catch-all so /script.js, /style.css, /favicon.svg resolve correctly
+@app.get("/{filename}")
+def serve_frontend_file(filename: str):
+    file_path = os.path.join(FRONTEND_DIR, filename)
+    if os.path.isfile(file_path):
+        return FileResponse(file_path)
+    raise HTTPException(status_code=404, detail="File not found")
